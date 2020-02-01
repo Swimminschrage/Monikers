@@ -1,4 +1,105 @@
-var TOTAL_CARD_NUM = 483;
+// Array consisting of the point values for each card.
+const DECK = [
+	3,2,2,4,2,
+	2,3,1,2,3,
+	2,2,3,4,1,
+	3,2,2,4,2,
+	4,2,2,2,2,
+	3,2,3,2,4,
+	2,2,2,2,2,
+	3,2,4,2,2,
+	2,2,1,2,4,
+	2,3,2,2,2,
+	1,1,2,3,2,
+	1,2,2,1,1,
+	1,4,1,3,1,
+	1,1,1,1,4,
+	1,2,3,1,1,
+	1,1,3,1,1,
+	1,1,2,1,1,
+	2,1,2,2,2,
+	2,2,2,2,3,
+	2,1,1,2,2,
+	2,3,2,2,2,
+	1,2,2,2,2,
+	2,3,2,2,2,
+	2,3,2,2,2,
+	2,2,2,3,2,
+	4,2,1,3,4,
+	2,2,3,2,2,
+	3,2,2,1,2,
+	2,1,4,3,1,
+	3,4,1,1,2,
+	1,1,4,1,1,
+	3,2,1,1,2,
+	2,1,3,3,1,
+	1,1,4,2,1,
+	2,1,2,1,3,
+	2,2,1,1,2,
+	1,1,3,1,1,
+	3,1,1,1,1,
+	1,1,1,2,2,
+	1,1,2,2,4,
+	4,2,3,2,2,
+	4,4,2,3,2,
+	2,4,4,3,4,
+	4,4,4,2,4,
+	4,3,4,4,4,
+	1,4,3,1,4,
+	4,4,4,2,4,
+	2,2,2,4,2,
+	1,2,2,3,4,
+	4,4,4,4,4,
+	4,2,2,2,4,
+	2,3,2,2,2,
+	2,2,2,2,2,
+	2,2,2,4,2,
+	2,2,2,2,2,
+	2,2,2,2,1,
+	2,2,2,2,2,
+	2,3,2,4,2,
+	1,2,2,1,2,
+	3,2,3,2,3,
+	3,3,3,3,3,
+	3,4,2,3,3,
+	3,2,1,3,3,
+	3,2,3,3,3,
+	2,3,3,3,3,
+	3,3,3,3,4,
+	3,3,3,2,3,
+	3,3,4,2,3,
+	2,3,1,2,2,
+	3,3,2,2,3,
+	3,4,2,3,3,
+	3,3,3,3,3,
+	3,3,4,3,3,
+	3,3,3,3,3,
+	3,3,1,3,4,
+	3,3,3,3,4,
+	3,2,3,3,3,
+	3,3,3,3,3,
+	3,3,3,2,3,
+	4,2,3,3,3,
+	3,3,3,2,3,
+	3,3,3,3,3,
+	3,1,1,3,3,
+	3,1,4,3,3,
+	4,3,3,3,3,
+	3,3,3,3,3,
+	3,2,2,4,3,
+	3,3,3,3,1,
+	4,2,2,1,4,
+	2,4,3,2,1,
+	2,1,2,1,4,
+	3,3,2,2,3,
+	3,4,4,3,4,
+	4,1,3,3,2,
+	2,2,2,3,4,
+	3,3,3,2,2,
+	2,2,3,4
+
+];
+var TOTAL_CARD_NUM = DECK.length;
 
 function shuffleArray(array) {
     for (var i = array.length - 1; i > 0; i--) {
@@ -32,9 +133,9 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 	this.init = function() {
 		var deck = []
 		while (deck.length < this.cardNum) {
-			var random = Math.ceil(Math.random() * TOTAL_CARD_NUM)
+			var random = Math.floor(Math.random() * TOTAL_CARD_NUM);
 			if(deck.indexOf(random) == -1)
-				deck.push(random)	
+				deck.push(random)
 		}
 		this.deck = shuffleArray(deck)
 
@@ -64,9 +165,14 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 			return this.blueName + " won!"
 		else
 			return "It's a tie!"
+
+		// TODO: Store the current decks to ensure that we don't see those again.
 	}
 	this.getCardValue = function(card) {
-		return 1;
+		if (card === "") {
+			return 0;
+		}
+		return DECK[card];
 	}
 	//Whenever a card is passed, it is added to the passed pile
 	this.pass = function() {
@@ -179,9 +285,9 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 		localStorage.setItem("currentPhase", currentPhase);
 	}
 	this.restoreState = function() {
-		this.deck = localStorage.getItem("deck").split(",");
-		this.bluePile = localStorage.getItem("bluePile").split(",");
-		this.redPile = localStorage.getItem("redPile").split(",");
+		this.deck = this.restoreStateFromSplitString("deck");
+		this.bluePile = this.restoreStateFromSplitString("bluePile");
+		this.redPile = this.restoreStateFromSplitString("redPile");
 		this.blueName = localStorage.getItem("blueName");
 		this.redName = localStorage.getItem("redName");
 		this.bluePoints = parseInt(localStorage.getItem("bluePoints"));
@@ -207,5 +313,12 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 		localStorage.removeItem("cardsJustPassed");
 		localStorage.removeItem("currentPhase");
 	}
-} 
 
+	this.restoreStateFromSplitString = function(name) {
+		if (localStorage.getItem(name) !== "") {
+			return localStorage.getItem(name).split(",");
+		} else {
+			return [];
+		}
+	}
+} 
