@@ -206,8 +206,8 @@ function pause() {
 function restart() {
 	var yes = confirm("Are you sure you want to restart?")
 	if(yes) {
+		game.clearState();
 		game = null;
-		localStorage.clear()
 		$("#buttonContainer").hide()
 		$("#cardContainer").html(defaultHtml)
 		$("#cardContainer").height("95%")

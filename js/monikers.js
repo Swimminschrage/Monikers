@@ -112,9 +112,10 @@ function shuffleArray(array) {
 }
 
 function Game(cardNum, numRounds, team1Name, team2Name) {
-	this.deck
-	this.bluePile = []
-	this.redPile = []
+	this.deck = [];
+	this.previousCards = [];
+	this.bluePile = [];
+	this.redPile = [];
 	this.blueName = team1Name;
 	this.redName = team2Name;
 	this.passedPile = []
@@ -124,7 +125,7 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 	this.redPoints = 0
 	this.currentRound = 1
 	this.numRounds = numRounds
-	this.cardNum = cardNum
+	this.cardNum = parseInt(cardNum);
 	this.cardsJustGotten = 0
 	this.cardsJustPassed = 0
 	this.cardsInPileAtStartOfTurn
@@ -132,9 +133,18 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 	this.currentTurn
 	this.init = function() {
 		var deck = []
+		this.previousCards = this.restoreStateFromSplitString("previousCards");
+
+		// Determine if we have enough unique cards to play with. If not,
+		// clear out the previousCards list and start over.
+		if (TOTAL_CARD_NUM < this.previousCards.length + this.cardNum) {
+			console.log("Resetting Previous Cards!");
+			this.previousCards = [];
+		}
+
 		while (deck.length < this.cardNum) {
 			var random = Math.floor(Math.random() * TOTAL_CARD_NUM);
-			if(deck.indexOf(random) == -1)
+			if(deck.indexOf(random) == -1 && this.previousCards.indexOf(random + "") == -1)
 				deck.push(random)
 		}
 		this.deck = shuffleArray(deck)
@@ -143,6 +153,9 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 			this.currentTurn = -1
 		else
 			this.currentTurn = 1
+
+		console.log("PREVIOUS CARDS: " + this.previousCards.toString());
+		console.log("DECK CARDS: " + this.deck.toString());
 	}
 	this.getNextTeam = function() {
 		if(this.currentTurn == 1)
@@ -159,14 +172,15 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 			return "The game is tied!"
 	}
 	this.getFinalGameStatus = function() {
+		// Store the previous cards and old deck to ensure that we don't see those again.
+		localStorage.setItem("previousCards", this.deck.concat(this.previousCards));
+
 		if(this.redPoints > this.bluePoints)
 			return this.redName + " won!"
 		else if(this.bluePoints > this.redPoints)
 			return this.blueName + " won!"
 		else
 			return "It's a tie!"
-
-		// TODO: Store the current decks to ensure that we don't see those again.
 	}
 	this.getCardValue = function(card) {
 		if (card === "") {
@@ -271,6 +285,7 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 	}
 	this.storeState = function(currentPhase) {
 		localStorage.setItem("deck", this.deck.toString());
+		localStorage.setItem("previousCards", this.previousCards.toString());
 		localStorage.setItem("bluePile", this.bluePile.toString());
 		localStorage.setItem("redPile", this.redPile.toString());
 		localStorage.setItem("blueName", this.blueName);
@@ -286,6 +301,7 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 	}
 	this.restoreState = function() {
 		this.deck = this.restoreStateFromSplitString("deck");
+		this.previousCards = this.restoreStateFromSplitString("previousCards");
 		this.bluePile = this.restoreStateFromSplitString("bluePile");
 		this.redPile = this.restoreStateFromSplitString("redPile");
 		this.blueName = localStorage.getItem("blueName");
@@ -299,6 +315,7 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 		this.cardsJustPassed = parseInt(localStorage.getItem("cardsJustPassed"));
 	}
 	this.clearState = function() {
+		// Purposely ignore clearing "previousCards"
 		localStorage.removeItem("deck");
 		localStorage.removeItem("bluePile");
 		localStorage.removeItem("redPile");
@@ -315,7 +332,7 @@ function Game(cardNum, numRounds, team1Name, team2Name) {
 	}
 
 	this.restoreStateFromSplitString = function(name) {
-		if (localStorage.getItem(name) !== "") {
+		if (localStorage.getItem(name) && localStorage.getItem(name) !== "") {
 			return localStorage.getItem(name).split(",");
 		} else {
 			return [];
